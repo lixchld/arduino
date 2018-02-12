@@ -13,13 +13,30 @@ Code license: Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0
 #include <AFMotor.h>
 #include <Servo.h> 
 
+int SensorINPUT = 2;      //连接震动开关到中断1，也就是数字引脚3 
+unsigned char touched = 0;
+int  key = 0;
+
+int actions[] = { 'A', 'S', 'W', 'D'};
+
+enum eBoxState {
+  unknown = 0,// default value
+  idle,       // box is idle  
+  manualMode, // manual mode, and waiting for next command
+  autoMode,   // auto mode
+  err
+};
+
 /*
  b_motor_stop(): stop motor
  b_motor_com():  for Manual Operator
  b_servo_ini();
  b_servo_com();
  b_skill();
- */
+ */ 
+eBoxState boxState = autoMode;
+unsigned long lastCmdTime = 0;
+
 
 //-------------------define motor----------------------------------------------//
 AF_DCMotor motorL(1,MOTOR12_8KHZ);  //connect to M1
@@ -40,25 +57,78 @@ int hand_delay = 1;  //[modifid] speed of hand
 void setup()
 {
   Serial.begin(9600);
+  pinMode(SensorINPUT, INPUT);        //震动开关为输入模式
   b_motor_stop();
   b_servo_ini();
+
+  //低电平变高电平的过程中，触发中断1，调用blink函数
+  attachInterrupt(digitalPinToInterrupt(SensorINPUT), blink, RISING);   
+    
   delay(2000);  //waiting time
-  Serial.println("Hello! BOXZ!");
+  
 }
 
 
 void loop()
 {
-  int  key;
-  if(Serial.available() > 0) {    
+  key = 0;
+  
+  if(Serial.available() > 0) {   
+
+    // Quit from auto mode, and set box state to waitingCmd
+    boxState = manualMode;
+    lastCmdTime = millis();
     key = Serial.read();  
-    if(key >= 30 && key <= 122) { 
-      b_motor_com(key);  
-      b_servo_com(key);
-      b_skill(key);
+  }
+  else{
+    if( millis() - lastCmdTime > 6000 && boxState == manualMode ){
+        // set the box state to the auto mode step0
+        boxState = autoMode;
     }
   }
+  int action = getAction( boxState );
+  Serial.print("Action = ");
+  Serial.println(action);
+  if(action >= 30 && action <= 122) { 
+    b_motor_com(action);  
+    b_servo_com(action);
+    b_skill(action);       
+  }
+
+    
   // servo_test();
+}
+
+int getAction( eBoxState state){
+  int action = 0;
+
+  switch( state ){
+    case autoMode:
+        if(touched!=0){              // 如果state不是0时
+          touched = 0;               // state值赋为0
+          int index = random( 0, 3);
+          Serial.print("AutoMode random = ");
+          Serial.println(index);
+          action = actions[index];
+          delay(300);
+        }
+        else{
+          Serial.println("AutoMode no touch");          
+        }
+        
+      break;
+    case manualMode:
+      Serial.print("ManualMode action = ");
+      Serial.println(key);
+      action = key;      
+    case unknown:
+    case idle:
+    case err:
+    default:
+      break;
+  }
+
+  return action;
 }
 
 //---------------------------------motor-------------------------------//
@@ -321,4 +391,6 @@ void b_skill(int keyword){
   }
 }
 
-
+void blink(){   //中断函数blink()
+  touched++;    //一旦中断触发，state就不断自加
+}
