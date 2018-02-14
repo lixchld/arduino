@@ -47,11 +47,12 @@ int hand_delay = 1;  //[modifid] speed of hand
 void setup()
 {
   Serial.begin(9600);
-  pinMode(vibrationInput, INPUT);
+
   b_motor_stop();
   b_servo_ini();
 
-  //低电平变高电平的过程中，触发中断1，调用blink函数
+  //set up interrup on vibration pin, 
+  pinMode(vibrationInput, INPUT);
   attachInterrupt(digitalPinToInterrupt(vibrationInput), blink, RISING);   
     
   delay(2000);  //waiting time
