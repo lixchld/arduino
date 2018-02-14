@@ -3,6 +3,7 @@
 #include <Servo.h> 
 
 int vibrationInput = 2;
+volatile bool disableVibrationDetection = false;
 volatile unsigned char vibration = 0;
 int  key = 0;
 
@@ -31,9 +32,9 @@ unsigned long lastCmdTime = 0;
 //-------------------define motor----------------------------------------------//
 AF_DCMotor motorL(1,MOTOR12_8KHZ);  //connect to M1
 AF_DCMotor motorR(2,MOTOR12_8KHZ);  //connect to M2
-int motor_speed = 80; //[modifid]motor speed 150-200,---min:100;max:255
-int motor_delay = 400; //[modifid]delay time in step
-int motor_speed_increase = 30;//speed increase while turn left/right
+int motor_speed = 150; //[modifid]motor speed 150-200,---min:100;max:255
+int motor_delay = 600; //[modifid]delay time in step
+int motor_speed_increase = 50;//speed increase while turn left/right
 
 //-------------------define servo----------------------------------------------//
 Servo hand_l_servo;  // create servo object to control a servo 
@@ -65,7 +66,6 @@ void loop()
   key = 0;
   
   if(Serial.available() > 0) {   
-
     // Quit from auto mode, and set box state to waitingCmd
     boxState = manualMode;
     lastCmdTime = millis();
@@ -77,13 +77,20 @@ void loop()
         boxState = autoMode;
     }
   }
+  
   int action = getAction( boxState );
   Serial.print("Action = ");
   Serial.println(action);
   if(action >= 30 && action <= 122) { 
+    detachInterrupt(digitalPinToInterrupt(vibrationInput));    
+    disableVibrationDetection = true;
     b_motor_com(action);  
     b_servo_com(action);
-    b_skill(action);       
+    b_skill(action);
+
+    disableVibrationDetection = false;    
+    delay(200);
+    attachInterrupt(digitalPinToInterrupt(vibrationInput), blink, RISING);
   }
 
     
@@ -95,7 +102,9 @@ int getAction( eBoxState state){
 
   switch( state ){
     case autoMode:
-        if(vibration != 0){
+        Serial.print("Vibration = ");
+        Serial.println(vibration);    
+        if(vibration > 5){
           vibration = 0;
           int index = random( 0, 3);
           Serial.print("AutoMode random = ");
@@ -185,7 +194,7 @@ void b_motor_com(int keyword){
     motorR.setSpeed(motor_speed);
     motorL.run(BACKWARD);
     motorR.run(FORWARD);
-    delay(motor_delay); 
+    delay(2*motor_delay); 
     b_motor_stop();
   }
   //turn right step
@@ -194,7 +203,7 @@ void b_motor_com(int keyword){
     motorR.setSpeed(motor_speed);
     motorL.run(FORWARD);
     motorR.run(BACKWARD);
-    delay(motor_delay); 
+    delay(2*motor_delay); 
     b_motor_stop();
   }
   //Stop
@@ -383,5 +392,6 @@ void b_skill(int keyword){
 }
 
 void blink(){   //中断函数blink()
-  vibration++;    //一旦中断触发，state就不断自加
+  //if(!disableVibrationDetection)
+    vibration++;    //一旦中断触发，state就不断自加
 }
