@@ -1,22 +1,12 @@
-/*
-BOXZ is is an open source robot platform for interactive entertainment! 
-We connected Arduino,Plexiglass(PMMA) Origami and your idea together, 
-so we can easily and quickly build a remote robot by ourself! 
-We can use it to playing football game, racing, fighting or some other interesting things!
-
-Author: Guangjun Zhu
-Email: zgj0729@163.com
-
-Code license: Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)
-*/
 
 #include <AFMotor.h>
 #include <Servo.h> 
 
-int SensorINPUT = 2;      //连接震动开关到中断1，也就是数字引脚3 
-unsigned char touched = 0;
+int vibrationInput = 2;
+volatile unsigned char vibration = 0;
 int  key = 0;
 
+//define the action code which will be executed under auto mode
 int actions[] = { 'A', 'S', 'W', 'D'};
 
 enum eBoxState {
@@ -26,16 +16,16 @@ enum eBoxState {
   autoMode,   // auto mode
   err
 };
+eBoxState boxState = autoMode;
+unsigned long lastCmdTime = 0;
 
 /*
  b_motor_stop(): stop motor
  b_motor_com():  for Manual Operator
- b_servo_ini();
+ b_servo_ini(); 
  b_servo_com();
  b_skill();
  */ 
-eBoxState boxState = autoMode;
-unsigned long lastCmdTime = 0;
 
 
 //-------------------define motor----------------------------------------------//
@@ -57,12 +47,12 @@ int hand_delay = 1;  //[modifid] speed of hand
 void setup()
 {
   Serial.begin(9600);
-  pinMode(SensorINPUT, INPUT);        //震动开关为输入模式
+  pinMode(vibrationInput, INPUT);
   b_motor_stop();
   b_servo_ini();
 
   //低电平变高电平的过程中，触发中断1，调用blink函数
-  attachInterrupt(digitalPinToInterrupt(SensorINPUT), blink, RISING);   
+  attachInterrupt(digitalPinToInterrupt(vibrationInput), blink, RISING);   
     
   delay(2000);  //waiting time
   
@@ -104,8 +94,8 @@ int getAction( eBoxState state){
 
   switch( state ){
     case autoMode:
-        if(touched!=0){              // 如果state不是0时
-          touched = 0;               // state值赋为0
+        if(vibration != 0){
+          vibration = 0;
           int index = random( 0, 3);
           Serial.print("AutoMode random = ");
           Serial.println(index);
@@ -392,5 +382,5 @@ void b_skill(int keyword){
 }
 
 void blink(){   //中断函数blink()
-  touched++;    //一旦中断触发，state就不断自加
+  vibration++;    //一旦中断触发，state就不断自加
 }
