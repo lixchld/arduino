@@ -17,6 +17,7 @@ int s_max[5];
 
 int speed_value = 150;
 
+//Following threshold needs to be adjust according to ambinent light intensity
 int lower_threshold = 80;
 int threshold = 128;
 int upper_threshold = 200;
@@ -30,7 +31,7 @@ void setup() {
   motor_r.run(RELEASE);
 
   for( int i=0; i<5; i++){
-    //pinMode(i, INPUT);  
+    // init min & max to make sure they could be updated
     s_min[i] = 255;
     s_max[i] = 0;  
   }
@@ -39,6 +40,8 @@ void setup() {
 void updateSensors(){
   for(int idx = 0; idx<5; idx++){
     sensor[idx] = analogRead(idx);
+    
+    //update the min & max value
     if( sensor[idx] > s_max[idx]) {
       s_max[idx] = sensor[idx];
     }
@@ -68,11 +71,11 @@ void loop() {
 
       motor_r.run( FORWARD );
       motor_r.setSpeed( speed_value );
-    } else if( adj[SENSOR_L] < 1) {
-      if(adj[SENSOR_LM] < 1) {
-        if(adj[SENSOR_M ] < 1) { 
-          if(adj[SENSOR_RM] <  1 ){
-            if(adj[SENSOR_R] < 1 ) {
+    } else if( adj[SENSOR_L] < lower_threshold) {
+      if(adj[SENSOR_LM] < lower_threshold) {
+        if(adj[SENSOR_M ] < lower_threshold) { 
+          if(adj[SENSOR_RM] <  lower_threshold){
+            if(adj[SENSOR_R] < lower_threshold ) {
               Serial.println("Stop at the black block");
               
               motor_l.run(RELEASE);
