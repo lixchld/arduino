@@ -70,8 +70,6 @@ int Joint::update(){
         #endif    
         pwm.setPWM(servoNum, 0, curPos);
         
-        if(speed < 10)
-            delay(10-speed);           
     }
     return map( curPos, SERVOMIN, SERVOMAX, 0, 180);
 }
@@ -92,16 +90,28 @@ int Joint::setPosition( uint8_t position){
 
 /**************************************************************************/
 /*! 
-// @brief change the speed, it might be during an uncompleted movement
-// @param new position to move
-// @param new speed
-// @return old speed
+// @brief change the interval, as a result the speed will change accordingly
+// @param new interval to update the postion
+// @return old interval
 */
 /**************************************************************************/       
-uint8_t Joint::setSpeed( uint8_t speed ){
-    uint8_t oldSpeed = speed;
-    speed = speed;
-    return oldSpeed;
+uint16_t Joint::setInterval( uint16_t interval ){
+    uint16_t oldInterval = updateInterval;
+    this->updateInterval = interval;
+    return oldInterval;
+}
+
+/**************************************************************************/
+/*! 
+// @brief change the increment of movement, as a result the speed will change accordingly
+// @param new increment is used to move to target postion
+// @return old increment
+*/
+/**************************************************************************/       
+uint16_t Joint::setIncrement( uint16_t increment ){
+    uint16_t oldIncrement = this->increment;
+    this->increment = increment;
+    return oldIncrement;
 }
 
 

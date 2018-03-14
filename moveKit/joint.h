@@ -63,21 +63,21 @@ class Joint{
 
         /**************************************************************************/
         /*! 
-        // @brief change the speed, it might be during an uncompleted movement
-        // @param new position to move
-        // @param new speed
-        // @return old speed
+        // @brief change the interval, as a result the speed will change accordingly
+        // @param new interval to update the postion
+        // @return old interval
         */
         /**************************************************************************/       
-        uint8_t setSpeed( uint8_t speed );
+        uint16_t setInterval( uint16_t interval );
 
         /**************************************************************************/
         /*! 
-        // @brief return current speed
-        // @return current speed
+        // @brief change the increment of movement, as a result the speed will change accordingly
+        // @param new increment is used to move to target postion
+        // @return old increment
         */
-        /**************************************************************************/   
-        uint8_t getCurSpeed();
+        /**************************************************************************/       
+        uint16_t setIncrement( uint16_t increment );
 
         /**************************************************************************/
         /*! 
