@@ -7,11 +7,31 @@
 // @param interval between each movemvent
 */
 /**************************************************************************/
-Joint::Joint( uint8_t servoNum, int interval){
-    this->servoNum = servoNum;
-    this->updateInterval = interval;
-    this->increment = 10;
+Joint::Joint( ){
+    this->servoNum = 0;
+    updateInterval = 3;
+    lastUpdate = 0;
+    increment = 1;
 };
+
+/**************************************************************************/
+/*! 
+// @brief initialize the jiont instance
+// @param new position to move
+// @param interval between each movemvent
+*/
+/**************************************************************************/
+void Joint::setup( uint8_t servoNum, int interval, int increment ){
+    this->servoNum = servoNum;
+    updateInterval = interval;
+    lastUpdate = 0;
+    this->increment = increment;
+    speed = 10;
+
+    pwm.begin();
+    pwm.setPWMFreq(60);
+}
+        
 
 /**************************************************************************/
 /*! 
@@ -19,33 +39,41 @@ Joint::Joint( uint8_t servoNum, int interval){
 // @return the current position
 */
 /**************************************************************************/
-uint8_t Joint::update(){
+int Joint::update(){
+  
+#ifdef _DEBUG_OUTPUT_ENABLED
+  Serial.print( "Joint.curPos = ");
+  Serial.print( curPos );
+  Serial.print( " Joint.targetPos = ");
+  Serial.println( targetPos);
+#endif
+
     if(curPos == targetPos )
         return curPos;
 
-    if((millis() - this->lastUpdate) > this->updateInterval)  // time to update
+    if((millis() - lastUpdate) > updateInterval)  // time to update
     {
-      this->lastUpdate = millis();
+      lastUpdate = millis();
 
-      int pulselen = map( this->targetPos, 0, 180, SERVOMIN, SERVOMAX);
-      int tmpPos = this->curPos;
-
-      for( int idx = 1; idx >= this->increment; idx++){
-        if( pulselen > this->curPos )
-          this->curPos += 1;
-        else
-          this->curPos -= 1;
-
-        this->pwm.setPWM(this->servoNum, 0, this->curPos);
+        if( targetPos > curPos ){
+          curPos += increment;
+          if( curPos > targetPos ) curPos = targetPos;
+        }
+        else{
+          curPos -= increment;
+          if( curPos < targetPos ) curPos = targetPos;
+        }
+          
+        #ifdef _DEBUG_OUTPUT_ENABLED
+          Serial.print( "Joint.setPWM: ");
+          Serial.println( curPos );
+        #endif    
+        pwm.setPWM(servoNum, 0, curPos);
         
         if(speed < 10)
-            delay(10-speed);
-            
-        if(this->curPos == this->targetPos )
-          break;              
-      }
+            delay(10-speed);           
     }
-    return this->curPos;  
+    return map( curPos, SERVOMIN, SERVOMAX, 0, 180);
 }
 
 
@@ -56,10 +84,10 @@ uint8_t Joint::update(){
 // @return previous setting for position
 */
 /**************************************************************************/
-uint8_t Joint::setPosition( uint8_t position){
-    uint8_t oldPos = this->targetPos;
-    this->targetPos = position;
-    return oldPos;
+int Joint::setPosition( uint8_t position){
+    int oldPos = targetPos;
+    targetPos =  map( position, 0, 180, SERVOMIN, SERVOMAX);
+    return map( oldPos,SERVOMIN, SERVOMAX, 0, 180);
 }
 
 /**************************************************************************/
@@ -71,8 +99,8 @@ uint8_t Joint::setPosition( uint8_t position){
 */
 /**************************************************************************/       
 uint8_t Joint::setSpeed( uint8_t speed ){
-    uint8_t oldSpeed = this->speed;
-    this->speed = speed;
+    uint8_t oldSpeed = speed;
+    speed = speed;
     return oldSpeed;
 }
 
@@ -84,7 +112,7 @@ uint8_t Joint::setSpeed( uint8_t speed ){
 */
 /**************************************************************************/   
 uint8_t Joint::getCurSpeed(){
-    return this->speed;
+    return speed;
 }
 
 /**************************************************************************/
@@ -93,6 +121,6 @@ uint8_t Joint::getCurSpeed(){
 // @return current position
 */
 /**************************************************************************/   
-uint8_t Joint::getCurPosition(){
-    return this->curPos;
+int Joint::getCurPosition(){
+    return map( curPos,SERVOMIN, SERVOMAX, 0, 180);
 }

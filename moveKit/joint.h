@@ -8,6 +8,8 @@
 
 #include <Adafruit_PWMServoDriver.h>
 
+//#define _DEBUG_OUTPUT_ENABLED
+
 // 2*3.7v -> 4.0-4.74-5.0 v min=110;max=560 0-180
 #define SERVOMIN  110 // this is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  560 // this is the 'maximum' pulse length count (out of 4096)
@@ -21,8 +23,8 @@ class Joint{
     protected: 
         uint8_t servoNum;   // servo number
         uint8_t speed;      // speed of joint move: value speed level is from 1-10
-        uint8_t curPos;     // current position/angle of servo
-        uint8_t targetPos;  // target position to move
+        uint16_t curPos;     // current position/angle of servo
+        uint16_t targetPos;  // target position to move
         Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();;
 
     public:
@@ -30,18 +32,25 @@ class Joint{
         /**************************************************************************/
         /*! 
         // @brief Construct a joint instance
+        */
+        /**************************************************************************/
+        Joint();
+
+        /**************************************************************************/
+        /*! 
+        // @brief initialize the jiont instance
         // @param new position to move
         // @param interval between each movemvent
         */
         /**************************************************************************/
-        Joint( uint8_t servoNum, int interval=1);
+        void setup( uint8_t servoNum, int interval=1, int increment = 1);        
 
         /**************************************************************************/
         /*! 
         // @brief move to the target position
         */
         /**************************************************************************/
-        uint8_t update();
+        int update();
 
         /**************************************************************************/
         /*! 
@@ -50,7 +59,7 @@ class Joint{
         // @return previous setting for position
         */
         /**************************************************************************/
-        uint8_t setPosition( uint8_t position);
+        int setPosition( uint8_t position);
 
         /**************************************************************************/
         /*! 
@@ -75,7 +84,7 @@ class Joint{
         // @brief return current position
         // @return current position        */
         /**************************************************************************/   
-        uint8_t getCurPosition();
+        int getCurPosition();
 };
 
 #endif //_Joint_h_
