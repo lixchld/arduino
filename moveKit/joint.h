@@ -14,6 +14,9 @@
 #define SERVOMIN  110 // this is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  560 // this is the 'maximum' pulse length count (out of 4096)
 
+#define ANGLEMIN 0
+#define ANGLEMAX 180
+
 class Joint{
     private:
         int increment;              // increment to move for each interval
@@ -22,19 +25,20 @@ class Joint{
 
     protected: 
         uint8_t servoNum;   // servo number
-        uint8_t speed;      // speed of joint move: value speed level is from 1-10
-        uint16_t curPos;     // current position/angle of servo
-        uint16_t targetPos;  // target position to move
-        Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();;
+        uint16_t curPos;    // current position/angle of servo
+        uint16_t targetPos; // target position to move
+        Joint* pParent;      // parent joint
+        Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
     public:
-
+        bool updateChildren;// update children's position
+        
         /**************************************************************************/
         /*! 
         // @brief Construct a joint instance
         */
         /**************************************************************************/
-        Joint();
+        Joint(Joint* pParent = NULL);
 
         /**************************************************************************/
         /*! 

@@ -7,11 +7,12 @@
 // @param interval between each movemvent
 */
 /**************************************************************************/
-Joint::Joint( ){
+Joint::Joint( Joint* pParent ){
     this->servoNum = 0;
     updateInterval = 3;
     lastUpdate = 0;
     increment = 1;
+    this->pParent = pParent;
 };
 
 /**************************************************************************/
@@ -26,7 +27,6 @@ void Joint::setup( uint8_t servoNum, int interval, int increment ){
     updateInterval = interval;
     lastUpdate = 0;
     this->increment = increment;
-    speed = 10;
 
     pwm.begin();
     pwm.setPWMFreq(60);
@@ -48,8 +48,22 @@ int Joint::update(){
   Serial.println( targetPos);
 #endif
 
-    if(curPos == targetPos )
-        return curPos;
+    if( pParent && !pParent->updateChildren ){
+      #ifdef _DEBUG_OUTPUT_ENABLED
+        Serial.println( "Joint update disabled: updateChildren = false");
+      #endif      
+      return curPos;
+    }
+
+
+    if(curPos == targetPos ){
+      #ifdef _DEBUG_OUTPUT_ENABLED
+        Serial.println( "Joint update disabled: curPos == targetPos");
+      #endif  
+      
+      return curPos;      
+    }
+
 
     if((millis() - lastUpdate) > updateInterval)  // time to update
     {
@@ -71,7 +85,7 @@ int Joint::update(){
         pwm.setPWM(servoNum, 0, curPos);
         
     }
-    return map( curPos, SERVOMIN, SERVOMAX, 0, 180);
+    return map( curPos, SERVOMIN, SERVOMAX, ANGLEMIN, ANGLEMAX);
 }
 
 
@@ -85,7 +99,7 @@ int Joint::update(){
 int Joint::setPosition( uint8_t position){
     int oldPos = targetPos;
     targetPos =  map( position, 0, 180, SERVOMIN, SERVOMAX);
-    return map( oldPos,SERVOMIN, SERVOMAX, 0, 180);
+    return map( oldPos,SERVOMIN, SERVOMAX, ANGLEMIN, ANGLEMAX);
 }
 
 /**************************************************************************/
@@ -114,17 +128,6 @@ uint16_t Joint::setIncrement( uint16_t increment ){
     return oldIncrement;
 }
 
-
-/**************************************************************************/
-/*! 
-// @brief return current speed
-// @return old speed
-*/
-/**************************************************************************/   
-uint8_t Joint::getCurSpeed(){
-    return speed;
-}
-
 /**************************************************************************/
 /*! 
 // @brief return current position
@@ -132,5 +135,5 @@ uint8_t Joint::getCurSpeed(){
 */
 /**************************************************************************/   
 int Joint::getCurPosition(){
-    return map( curPos,SERVOMIN, SERVOMAX, 0, 180);
+    return map( curPos,SERVOMIN, SERVOMAX, ANGLEMIN, ANGLEMAX);
 }

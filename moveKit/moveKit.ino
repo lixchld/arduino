@@ -1,7 +1,54 @@
-#include "joint.h" 
+#include "leg.h" 
 
 #define JOINT_CNT 2
 
+//Test code for leg
+movement data[2][2];
+leg leg1 = leg();
+uint8_t moveDataId = 0;
+
+void initMoveData(){
+  data[0][0].sourcePosition = 75;
+  data[0][0].targetPosition = 105;
+  data[0][0].increment = 1;
+  data[0][0].updateInterval = 10;
+  data[0][0].id =  moveDataId++;
+  data[0][0].updateChildren = true;
+  data[0][1].sourcePosition = 105;
+  data[0][1].targetPosition = 75;
+  data[0][1].increment = 1;
+  data[0][1].updateInterval = 10;
+  data[0][1].id =  moveDataId++;
+  data[0][1].updateChildren = true;
+
+  data[1][0].sourcePosition = 75;
+  data[1][0].targetPosition = 105;
+  data[1][0].increment = 1;
+  data[1][0].updateInterval = 2;
+  data[1][0].id =  moveDataId++;
+  data[1][0].updateChildren = false;  
+  data[1][1].sourcePosition = 105;
+  data[1][1].targetPosition = 75;
+  data[1][1].increment = 1;
+  data[1][1].updateInterval = 2;
+  data[1][1].id =  moveDataId++;  
+  data[1][1].updateChildren = false;  
+}
+
+void setup(){
+    Serial.begin(9600);
+    initMoveData();
+    leg1.setup(0, 1);
+    leg1.setData( 0, 2, (movement*)data[0] );
+    leg1.setData( 1, 2, (movement*)data[1] );
+}
+
+void loop(){
+  leg1.update();
+}
+
+//Test code for Joint
+/*
 Joint joint[JOINT_CNT];
 
 int targetPos[JOINT_CNT];
@@ -35,22 +82,5 @@ void loop() {
       joint[id].setPosition(targetPos[id]);
     }
   }
+}*/
 
-  /*
-  int curPos = joint.update();
-  //Serial.print("curPos = ");
-  //Serial.println(curPos);
-
-  if( abs(curPos - targetPos) < 2 ){
-    i++;
-    if( i > 3 ) i=0;
-    
-    targetPos = pos[i];
-
-    //Serial.print("set new position:");
-    //Serial.println(targetPos);
-    joint.setPosition(targetPos);
-  }*/
-
-  
-}
